@@ -3,6 +3,10 @@ project(sx1509)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -lwiringPi -lpthread")
 
-#file(GLOB_RECURSE SOURCE_FILES ${PROJECT_SOURCE_DIR}/*(.cpp,.cc,.cxx,.hpp,.hxx,.c,.h))
-set(SOURCE_FILES main.cpp sx1509_registers.h SparkFunSX1509.h SparkFunSX1509.cpp)
-add_executable(sx1509 ${SOURCE_FILES})
+set(SOURCE_FILES sx1509_registers.h SparkFunSX1509.h SparkFunSX1509.cpp)
+set(DEMO_FILES main.cpp)
+
+add_library(sx1509 STATIC ${SOURCE_FILES})
+
+add_executable(sx1509_demo ${DEMO_FILES})
+target_link_libraries(sx1509_demo sx1509)

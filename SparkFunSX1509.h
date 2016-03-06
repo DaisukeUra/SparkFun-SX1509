@@ -67,11 +67,9 @@ private:	// These private functions are not available to Arduino sketches.
 // Read Functions:
 	byte readByte(byte registerAddress);
 	unsigned int readWord(byte registerAddress);
-	void readBytes(byte firstRegisterAddress, byte * destination, byte length);
 // Write functions:
 	void writeByte(byte registerAddress, byte writeValue);
 	void writeWord(byte registerAddress, unsigned int writeValue);
-	void writeBytes(byte firstRegisterAddress, byte * writeArray, byte length);
 // Helper functions:
 	// calculateLEDTRegister - Try to estimate an LED on/off duration register, 
 	// given the number of milliseconds and LED clock frequency.
@@ -86,9 +84,6 @@ public:
 //		SX1509, and sets up the private deviceAddress variable.
 // -----------------------------------------------------------------------------
 	SX1509();
-// Legacy below. Use 0-parameter constructor, and set these parameters in the 
-// begin function:
-	SX1509(byte address, byte resetPin = 255, byte interruptPin = 255, byte oscillatorPin = 255); 
 
 // -----------------------------------------------------------------------------
 // begin(byte address, byte resetPin): This function initializes the SX1509.
@@ -104,7 +99,8 @@ public:
 // Output: Returns a 1 if communication is successful, 0 on error.
 // -----------------------------------------------------------------------------
 	byte begin(byte address = 0x3E, byte resetPin = 0xFF);
-	byte init(void); // Legacy -- use begin now
+	byte begin(const char* device, byte address = 0x3E, byte resetPin = 0xFF);
+	byte init(const char*); // Legacy -- use begin now
 	
 // -----------------------------------------------------------------------------
 // reset(bool hardware): This function resets the SX1509 - either a hardware 
@@ -406,6 +402,7 @@ public:
 // -----------------------------------------------------------------------------
 	unsigned int interruptSource(bool clear = true);
 
+	void clearInterrupt();
 // -----------------------------------------------------------------------------
 // checkInterrupt(void): Checks if a single pin generated an interrupt.
 //

@@ -26,11 +26,9 @@ Distributed as-is; no warranty is given.
 #include "sx1509_registers.h"
 
 #include <cstdlib>
-#include <iostream>
-#include <bitset>
 
-#include "wiringPi.h"
-#include "wiringPiI2C.h"
+#include <wiringPi.h>
+#include <wiringPiI2C.h>
 
 
 SX1509::SX1509()
@@ -38,30 +36,28 @@ SX1509::SX1509()
 	_clkX = 0;
 }
 
-SX1509::SX1509(byte address, byte resetPin, byte interruptPin, byte oscillatorPin)
-{
-	// Store the received parameters into member variables
-	deviceAddress =  address;
-	pinInterrupt = interruptPin;
-	pinOscillator = oscillatorPin;
-	pinReset = resetPin;
-}
-
 byte SX1509::begin(byte address, byte resetPin)
 {
+	begin(nullptr, address, resetPin);
+}
+
+byte SX1509::begin(const char* device, byte address, byte resetPin)
+{
 	// Store the received parameters into member variables
 	deviceAddress =  address;
 	pinReset = resetPin;
-	
-	return init();
+
+	return init(device);
 }
 
-byte SX1509::init(void)
+byte SX1509::init(const char* device)
 {
 	// Begin I2C
 	//Wire.begin();
-	wiringPiFd = wiringPiI2CSetup(deviceAddress);
-	std::cout << "WiringPI FD: " << wiringPiFd << std::endl;
+	if(device == nullptr)
+		wiringPiFd = wiringPiI2CSetup(deviceAddress);
+	else
+		wiringPiFd = wiringPiI2CSetupInterface(device, deviceAddress);
 
 	// If the reset pin is connected
 	if (pinReset != 255)
@@ -593,6 +589,11 @@ unsigned int SX1509::interruptSource(bool clear /* =true*/)
 	return intSource;
 }
 
+void SX1509::clearInterrupt()
+{
+	writeWord(REG_INTERRUPT_SOURCE_B, 0xFFFF);	// Clear interrupts
+}
+
 bool SX1509::checkInterrupt(int pin)
 {
 	if (interruptSource(false) & (1<<pin))
@@ -740,42 +741,13 @@ unsigned int SX1509::readWord(byte registerAddress)
 	//wiringPiI2CWriteReg8(wiringPiFd, 0, registerAddress);
 //
 //	unsigned int readValue = static_cast<unsigned int>(wiringPiI2CRead(wiringPiFd));
+	wiringPiI2CWrite(wiringPiFd, registerAddress);
 	auto tmpResult = wiringPiI2CReadReg16(wiringPiFd, registerAddress);
 	//auto msb = (Wire.read() & 0x00FF) << 8;
 	//auto lsb = (Wire.read() & 0x00FF);
 	tmpResult = ((tmpResult & 0x00FF) << 8) | (tmpResult >> 8);
 
 	return static_cast<unsigned int>(tmpResult);
-}
-
-// readBytes(byte firstRegisterAddress, byte * destination, byte length)
-//	This function reads a series of bytes incrementing from a given address
-//	- firstRegsiterAddress is the first address to be read
-//	- destination is an array of bytes where the read values will be stored into
-//	- length is the number of bytes to be read
-//	- No return value.
-void SX1509::readBytes(byte firstRegisterAddress, byte * destination, byte length)
-{
-//	byte readValue;
-//
-//	Wire.beginTransmission(deviceAddress);
-//	Wire.write(firstRegisterAddress);
-//	Wire.endTransmission();
-//	Wire.requestFrom(deviceAddress, length);
-//
-//	while (Wire.available() < length)
-//		;
-//
-//	for (int i=0; i<length; i++)
-//	{
-//		destination[i] = Wire.read();
-//	}
-	//wiringPiI2CWrite(wiringPiFd, firstRegisterAddress);
-
-	for (int i = 0; i < length; ++i)
-	{
-		destination[i] = static_cast<byte>(wiringPiI2CReadReg8(wiringPiFd, firstRegisterAddress));
-	}
 }
 
 // writeByte(byte registerAddress, byte writeValue)
@@ -810,27 +782,4 @@ void SX1509::writeWord(byte registerAddress, unsigned int writeValue)
 	writeValue = ((writeValue & 0x00FF) << 8) | (writeValue >> 8);
 
 	wiringPiI2CWriteReg16(wiringPiFd, registerAddress, writeValue);
-}
-
-// writeBytes(byte firstRegisterAddress, byte * writeArray, byte length)
-//	This function writes an array of bytes, beggining at a specific adddress
-//	- firstRegisterAddress is the initial register to be written.
-//		- All writes following will be at incremental register addresses.
-//	- writeArray should be an array of byte values to be written.
-//	- length should be the number of bytes to be written.
-//	- no return value.
-void SX1509::writeBytes(byte firstRegisterAddress, byte * writeArray, byte length)
-{
-//	Wire.beginTransmission(deviceAddress);
-//	Wire.write(firstRegisterAddress);
-//	for (int i=0; i<length; i++)
-//	{
-//		Wire.write(writeArray[i]);
-//	}
-//	Wire.endTransmission();
-	//wiringPiI2CWrite(wiringPiFd, firstRegisterAddress);
-	for (int i = 0; i < length; ++i)
-	{
-		wiringPiI2CWriteReg8(wiringPiFd, firstRegisterAddress, writeArray[i]);
-	}
 }
