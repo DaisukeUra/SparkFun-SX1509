@@ -55,12 +55,13 @@ class SX1509 {
  private:  // These private functions are not available to Arduino sketches.
            // If you need to read or write directly to registers, consider
            // putting the writeByte, readByte functions in the public section
-  int wiringPiFd;
+  int pigpioID;
   byte deviceAddress;  // I2C Address of SX1509
                        // Pin definitions:
   byte pinInterrupt;
   byte pinOscillator;
   byte pinReset;
+  byte i2cbus_;
   // Misc variables:
   unsigned long _clkX;
   // Read Functions:
@@ -98,8 +99,9 @@ class SX1509 {
   // attempt to software reset the SX1509. Output: Returns a 1 if communication
   // is successful, 0 on error.
   // -----------------------------------------------------------------------------
-  byte begin(byte address = 0x3E, byte resetPin = 0xFF);
-  byte begin(const char* device, byte address = 0x3E, byte resetPin = 0xFF);
+  byte begin(byte address = 0x3E, byte i2cbus = 1, byte resetPin = 0xFF);
+  byte begin(const char* device, byte address = 0x3E, byte i2cbus = 1,
+             byte resetPin = 0xFF);
   byte init(const char*);  // Legacy -- use begin now
 
   // -----------------------------------------------------------------------------
