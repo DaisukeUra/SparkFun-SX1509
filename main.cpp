@@ -21,7 +21,7 @@ uint32_t buttonHit = 0;
 
 int main(int argc, char** argv) {
   if ((gpioInitialise()) == PI_INIT_FAILED) {
-    fprintf(stderr, "Unable to setup wiringPi: %s\n", strerror(errno));
+    fprintf(stderr, "Unable to setup pigpio: %s\n", strerror(errno));
     return 1;
   }
 
