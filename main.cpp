@@ -2,7 +2,7 @@
 // Created by think on 3/5/16.
 //
 
-#include <pigpio.h>
+#include <pigpiod_if2.h>
 
 #include <cstring>
 #include <iostream>
@@ -20,13 +20,15 @@ const int time_out = 10;
 uint32_t buttonHit = 0;
 
 int main(int argc, char** argv) {
-  if ((gpioInitialise()) == PI_INIT_FAILED) {
+  auto io = SX1509();
+
+  auto pigpio_id = pigpio_start(0, 0);
+  if (pigpio_id < 0) {
     fprintf(stderr, "Unable to setup pigpio: %s\n", strerror(errno));
     return 1;
   }
 
-  auto io = SX1509();
-  if (!io.begin(SX1509_ADDRESS)) {
+  if (!io.begin(pigpio_id, SX1509_ADDRESS)) {
     std::cout << "Init failed" << std::endl;
     return 1;
   }
@@ -36,9 +38,9 @@ int main(int argc, char** argv) {
   io.debounceTime(2);
   io.debouncePin(SX1509_BUTTON_PIN);
 
-  gpioSetPullUpDown(INT_PIN, PI_PUD_UP);
-  gpioSetMode(INT_PIN, PI_INPUT);
-  if (gpioSetISRFunc(INT_PIN, FALLING_EDGE, time_out, nullptr) != 0) {
+  set_pull_up_down(pigpio_id, INT_PIN, PI_PUD_UP);
+  set_mode(pigpio_id, INT_PIN, PI_INPUT);
+  if (callback(pigpio_id, INT_PIN, FALLING_EDGE, nullptr) != 0) {
     fprintf(stderr, "Unable to setup ISR: %s\n", strerror(errno));
     return 1;
   }

@@ -26,22 +26,23 @@ Distributed as-is; no warranty is given.
 
 #include <cstdlib>
 
-#include "pigpio.h"
+#include "pigpiod_if2.h"
 #include "sx1509_registers.h"
 
 SX1509::SX1509() { _clkX = 0; }
 
-byte SX1509::begin(byte address, byte i2cbus, byte resetPin) {
-  begin(nullptr, address, i2cbus, resetPin);
+byte SX1509::begin(int handle, byte address, byte i2cbus, byte resetPin) {
+  begin(handle, nullptr, address, i2cbus, resetPin);
 }
 
-byte SX1509::begin(const char* device, byte address, byte i2cbus,
+byte SX1509::begin(int handle, const char* device, byte address, byte i2cbus,
                    byte resetPin) {
   // Store the received parameters into member variables
   // [TODO]: What is the "device"?
   deviceAddress = address;
   pinReset = resetPin;
   i2cbus_ = i2cbus;
+  pigpioID = handle;
 
   return init(device);
 }
@@ -49,10 +50,7 @@ byte SX1509::begin(const char* device, byte address, byte i2cbus,
 byte SX1509::init(const char* device) {
   // Begin I2C
   // Wire.begin();
-  if (device == nullptr)
-    pigpioID = (deviceAddress);
-  else
-    pigpioID = i2cOpen(i2cbus_, deviceAddress, 0);
+  i2c_handle = i2c_open(pigpioID, i2cbus_, deviceAddress, 0);
 
   // If the reset pin is connected
   if (pinReset != 255)
@@ -87,10 +85,10 @@ void SX1509::reset(bool hardware) {
       writeByte(REG_MISC, regMisc);
     }
     // Reset the SX1509, the pin is active low
-    gpioSetMode(pinReset, PI_OUTPUT);
-    gpioWrite(pinReset, PI_LOW);   // pull reset pin low
-    time_sleep(0.001);             // Wait for the pin to settle
-    gpioWrite(pinReset, PI_HIGH);  // pull reset pin back high
+    set_mode(pigpioID, pinReset, PI_OUTPUT);
+    gpio_write(pigpioID, pinReset, PI_LOW);   // pull reset pin low
+    time_sleep(0.001);                        // Wait for the pin to settle
+    gpio_write(pigpioID, pinReset, PI_HIGH);  // pull reset pin back high
   } else {
     // Software reset command sequence:
     writeByte(REG_RESET, 0x12);
@@ -403,10 +401,10 @@ void SX1509::sync(void) {
   }
 
   // Toggle nReset pin to sync LED timers
-  gpioSetMode(pinReset, PI_OUTPUT);  // set reset pin as output
-  gpioWrite(pinReset, PI_LOW);       // pull reset pin low
-  time_sleep(0.001);                 // Wait for the pin to settle
-  gpioWrite(pinReset, PI_HIGH);      // pull reset pin back high
+  set_mode(pigpioID, pinReset, PI_OUTPUT);  // set reset pin as output
+  gpio_write(pigpioID, pinReset, PI_LOW);   // pull reset pin low
+  time_sleep(0.001);                        // Wait for the pin to settle
+  gpio_write(pigpioID, pinReset, PI_HIGH);  // pull reset pin back high
 
   // Return nReset to POR functionality
   writeByte(REG_MISC, (regMisc & ~(1 << 2)));
@@ -617,9 +615,9 @@ byte SX1509::readByte(byte registerAddress) {
   // Wire.beginTransmission(deviceAddress);
   // Wire.write(registerAddress);
   // Wire.endTransmission();
-  i2cWriteByte(pigpioID, registerAddress);
+  i2c_write_byte(pigpioID, i2c_handle, registerAddress);
 
-  byte readValue = static_cast<byte>(i2cReadByte(pigpioID));
+  byte readValue = static_cast<byte>(i2c_read_byte(pigpioID, i2c_handle));
   // Wire.requestFrom(deviceAddress, (byte) 1);
 
   //	while ((Wire.available() < 1) && (timeout != 0))
@@ -664,8 +662,8 @@ unsigned int SX1509::readWord(byte registerAddress) {
   //
   //	unsigned int readValue = static_cast<unsigned
   // int>(wiringPiI2CRead(pigpioID));
-  i2cWriteByte(pigpioID, registerAddress);
-  auto tmpResult = i2cReadWordData(pigpioID, registerAddress);
+  i2c_write_byte(pigpioID, i2c_handle, registerAddress);
+  auto tmpResult = i2c_read_word_data(pigpioID, i2c_handle, registerAddress);
   // auto msb = (Wire.read() & 0x00FF) << 8;
   // auto lsb = (Wire.read() & 0x00FF);
   tmpResult = ((tmpResult & 0x00FF) << 8) | (tmpResult >> 8);
@@ -683,7 +681,7 @@ void SX1509::writeByte(byte registerAddress, byte writeValue) {
   //	Wire.write(registerAddress);
   //	Wire.write(writeValue);
   //	Wire.endTransmission();
-  i2cWriteByteData(pigpioID, registerAddress, writeValue);
+  i2c_write_byte_data(pigpioID, i2c_handle, registerAddress, writeValue);
 }
 
 // writeWord(byte registerAddress, ungisnged int writeValue)
@@ -703,5 +701,5 @@ void SX1509::writeWord(byte registerAddress, unsigned int writeValue) {
   //	Wire.endTransmission();
   writeValue = ((writeValue & 0x00FF) << 8) | (writeValue >> 8);
 
-  i2cWriteWordData(pigpioID, registerAddress, writeValue);
+  i2c_write_word_data(pigpioID, i2c_handle, registerAddress, writeValue);
 }

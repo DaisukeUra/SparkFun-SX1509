@@ -62,6 +62,7 @@ class SX1509 {
   byte pinOscillator;
   byte pinReset;
   byte i2cbus_;
+  int i2c_handle;
   // Misc variables:
   unsigned long _clkX;
   // Read Functions:
@@ -99,9 +100,10 @@ class SX1509 {
   // attempt to software reset the SX1509. Output: Returns a 1 if communication
   // is successful, 0 on error.
   // -----------------------------------------------------------------------------
-  byte begin(byte address = 0x3E, byte i2cbus = 1, byte resetPin = 0xFF);
-  byte begin(const char* device, byte address = 0x3E, byte i2cbus = 1,
+  byte begin(int handle, byte address = 0x3E, byte i2cbus = 1,
              byte resetPin = 0xFF);
+  byte begin(int handle, const char* device, byte address = 0x3E,
+             byte i2cbus = 1, byte resetPin = 0xFF);
   byte init(const char*);  // Legacy -- use begin now
 
   // -----------------------------------------------------------------------------
