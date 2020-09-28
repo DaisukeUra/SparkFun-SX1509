@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.0)
 project(sx1509)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -lpthread -lpigpio -lrt")
+add_compile_options(-fPIC)
 
-set(SOURCE_FILES sx1509_registers.h SparkFunSX1509.h SparkFunSX1509.cpp)
+set(SOURCE_FILES SparkFunSX1509.cpp)
 set(DEMO_FILES main.cpp)
 
 link_directories(/usr/local/lib)
