@@ -32,7 +32,7 @@ Distributed as-is; no warranty is given.
 SX1509::SX1509() { _clkX = 0; }
 
 byte SX1509::begin(int handle, byte address, byte i2cbus, byte resetPin) {
-  begin(handle, nullptr, address, i2cbus, resetPin);
+  return begin(handle, nullptr, address, i2cbus, resetPin);
 }
 
 byte SX1509::begin(int handle, const char* device, byte address, byte i2cbus,
