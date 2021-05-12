@@ -7,10 +7,13 @@ add_compile_options(-fPIC)
 set(SOURCE_FILES SparkFunSX1509.cpp)
 set(DEMO_FILES main.cpp)
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)              
+find_package(Threads REQUIRED)                   
+
 link_directories(/usr/local/lib)
 include_directories(/usr/local/include) 
 add_library(sx1509 STATIC ${SOURCE_FILES})
-target_link_libraries(sx1509 pigpiod_if2)
+target_link_libraries(sx1509 PUBLIC "-pthread" pigpiod_if2 )
 
 add_executable(sx1509_demo ${DEMO_FILES})
 target_link_libraries(sx1509_demo sx1509)
